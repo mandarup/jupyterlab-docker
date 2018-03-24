@@ -2,9 +2,10 @@ FROM nvcr.io/nvidia/tensorflow:18.01-py3
 
 # Install required packages
 RUN apt-get update && \
-     apt-get install -y python-setuptools python-dev build-essential python-pip python3-pip python-opencv
+     apt-get install -y python-setuptools python-dev build-essential python-pip \
+                        protobuf-compiler 
+
 RUN python2 -m pip install --upgrade pip
-RUN python3 -m pip install --upgrade pip
 RUN curl -sL https://deb.nodesource.com/setup_9.x | bash - &&  \
      apt-get install -y nodejs
 
@@ -16,17 +17,51 @@ RUN jupyter nbextension enable --py widgetsnbextension
 # Install JupyterLab
 RUN pip install jupyterlab && jupyter serverextension enable --py jupyterlab
 
-ENV LANG=C.UTF-8
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+
+ENV PATH /opt/conda/bin:$PATH
+
+RUN apt-get update --fix-missing && apt-get install -y wget bzip2 ca-certificates \
+    libglib2.0-0 libxext6 libsm6 libxrender1 \
+    git mercurial subversion
+
+RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda2-4.4.10-Linux-x86_64.sh -O ~/miniconda.sh && \
+    /bin/bash ~/miniconda.sh -b -p /opt/conda && \
+    rm ~/miniconda.sh && \
+    ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    echo "conda activate base" >> ~/.bashrc
+
+RUN apt-get install -y curl grep sed dpkg && \
+    TINI_VERSION=`curl https://github.com/krallin/tini/releases/latest | grep -o "/v.*\"" | sed 's:^..\(.*\).$:\1:'` && \
+    curl -L "https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini_${TINI_VERSION}.deb" > tini.deb && \
+    dpkg -i tini.deb && \
+    rm tini.deb && \
+    apt-get clean
+
+# Install Python Packages & Requirements (Done near end to avoid invalidating cache) for Jupyterlab
+COPY requirements.txt requirements.txt
+RUN python -m pip install -r requirements.txt
+
+COPY environment.yml environment.yml
+RUN conda env create -f environment.yml
+
+SHELL ["/bin/bash", "-c"]
 
 # Configure python3 as kernel
-RUN python3 -m pip install ipykernel && \
-     python3 -m ipykernel install --sys-prefix
+RUN source activate tl-predict && python3 -m ipykernel install --sys-prefix
 
-# Install Python Packages & Requirements (Done near end to avoid invalidating cache)
-COPY requirements.txt requirements.txt
-RUN python3 -m pip install -r requirements.txt
+# Install coco 
+RUN source activate tl-predict && \
+   git clone https://github.com/cocodataset/cocoapi.git && \
+   cd cocoapi/PythonAPI && \
+   sed -i 's/python/python3/g' Makefile && \
+   make && \
+   mkdir -p /usr/local/lib/python3.5/dist-packages/tensorflow/models/research && \
+   cp -r pycocotools /usr/local/lib/python3.5/dist-packages/tensorflow/models/research
 
 # Expose Jupyter port & cmd
+ENTRYPOINT [ "/usr/bin/tini", "--" ]
 EXPOSE 8888
 RUN mkdir -p /opt/app/data/TL_training
 VOLUME ["/opt/app/data/TL_training"]
