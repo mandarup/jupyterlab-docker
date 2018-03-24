@@ -49,10 +49,10 @@ RUN conda env create -f environment.yml
 SHELL ["/bin/bash", "-c"]
 
 # Configure python3 as kernel
-RUN source activate tl-predict && python3 -m ipykernel install --sys-prefix
+RUN source activate tl-detect && python3 -m ipykernel install --sys-prefix
 
 # Install coco 
-RUN source activate tl-predict && \
+RUN source activate tl-detect && \
    git clone https://github.com/cocodataset/cocoapi.git && \
    cd cocoapi/PythonAPI && \
    sed -i 's/python/python3/g' Makefile && \
