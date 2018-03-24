@@ -1,11 +1,30 @@
 # jupyterlab-docker
-[![Build Status](https://travis-ci.org/mikebirdgeneau/jupyterlab-docker.svg?branch=master)](https://travis-ci.org/mikebirdgeneau/jupyterlab-docker) 
-[![Coverage Status](https://coveralls.io/repos/github/mikebirdgeneau/jupyterlab-docker/badge.svg?branch=master)](https://coveralls.io/github/mikebirdgeneau/jupyterlab-docker?branch=master)
-[![Travis](https://img.shields.io/github/release/mikebirdgeneau/jupyterlab-docker.svg?maxAge=21600?style=flat-square)](http://github.com/mikebirdgeneau/jupyterlab-docker/releases) [![License](https://img.shields.io/badge/License-MIT_License-blue.svg?maxAge=21600?style=flat-square)](http://github.com/mikebirdgeneau/jupyterlab-docker/)
-[![Docker Pulls](https://img.shields.io/docker/pulls/mikebirdgeneau/jupyterlab.svg?maxAge=2592000?style=flat-square)](https://hub.docker.com/r/mikebirdgeneau/jupyterlab/)
+Jupyterlab Docker image specially modified to support nvidia optimized python for tensorflow.
 
-Jupyterlab Docker image
+## Build
+Head to [NVidia GPU Cloud](https://ngc.nvidia.com/) and create an account. Head
+to the configuration section and follow the steps to login. It should resemble
 
-This image is configured as an automated build on Docker Hub: [https://hub.docker.com/r/mikebirdgeneau/jupyterlab/](https://hub.docker.com/r/mikebirdgeneau/jupyterlab/).
+```
+$ docker login nvcr.io
 
-You can pull the lastest automated build using the docker pull command: `docker pull mikebirdgeneau/jupyterlab` or clone this repository and build the image locally using `docker-compse build`. 
+Username: $oauthtoken
+Password: <Your Key>
+```
+
+next
+
+```
+# Change to the jupyterlab directory
+cd jupyterlab
+# Build the container
+nvidia-docker build -t jupyterlab .
+```
+
+to run
+
+```
+nvidia-docker run --shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 -p 8888:8888 -v $PWD/../..:/opt/data/TL_training --rm -it jupyterlab
+```
+
+
