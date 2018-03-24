@@ -49,7 +49,7 @@ RUN conda env create -f environment.yml
 SHELL ["/bin/bash", "-c"]
 
 # Configure python3 as kernel
-RUN source activate tl-detect && python3 -m ipykernel install --sys-prefix
+RUN source activate tl-detect && python3 -m ipykernel install --user
 
 # Install coco 
 RUN source activate tl-detect && \
