@@ -24,7 +24,7 @@ nvidia-docker build -t jupyterlab .
 to run
 
 ```
-nvidia-docker run --shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 -p 8888:8888 -v $PWD/../..:/opt/data/TL_training --rm -it jupyterlab
+nvidia-docker run --shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 -p 8888:8888 -v $HOME/TL_training:/opt/app/data/TL_training --rm -it jupyterlab
 ```
 
 
