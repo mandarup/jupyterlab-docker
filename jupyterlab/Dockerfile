@@ -51,6 +51,18 @@ SHELL ["/bin/bash", "-c"]
 # Configure python3 as kernel
 RUN source activate tl-detect && python3 -m ipykernel install --user
 
+# Cleanup old tensorflow
+RUN mv /opt/tensorflow /opt/tensorflow_1.4
+# Get new tensorflow and set version equal to binary version 
+RUN cd /opt && \
+     git clone https://github.com/tensorflow/tensorflow tensorflow && \
+     cd tensorflow && \
+     git checkout tags/v1.6.0 
+
+# Download object detection models
+RUN cd /opt && \
+     git clone https://github.com/tensorflow/models tensorflow_models
+
 # Install coco 
 RUN source activate tl-detect && \
    git clone https://github.com/cocodataset/cocoapi.git && \
@@ -58,7 +70,10 @@ RUN source activate tl-detect && \
    sed -i 's/python/python3/g' Makefile && \
    make && \
    mkdir -p /usr/local/lib/python3.5/dist-packages/tensorflow/models/research && \
-   cp -r pycocotools /usr/local/lib/python3.5/dist-packages/tensorflow/models/research
+   cp -r pycocotools /opt/tensorflow_models/research && \
+   cd /opt/tensorflow_models/research && \
+   protoc object_detection/protos/*.proto --python_out=. && \
+   echo "export PYTHONPATH=$PYTHONPATH:/opt/tensorflow_models/research:/opt/tensorflow_models/research/slim" >> ~/.bashrc
 
 # Expose Jupyter port & cmd
 ENTRYPOINT [ "/usr/bin/tini", "--" ]
